@@ -15,6 +15,14 @@ def group_image(img):
 			result.append(img[r:r+windowsize_r,c:c+windowsize_c])
 	return result
 
+# get all 8 bitplanes for an image
+# 10010100 -> bitplane 8 is 1, bitplane 0 is 0
+def to_bitplane(img, bit):
+	result = []
+	for i in range(8):
+		result.append((img / (2 ** i)) % 2)
+	return result
+
 if __name__ == '__main__':
 	img_bmp = cv2.imread(img_bmp_filename, -1)
 	img_bmp_grouped = group_image(img_bmp)
