@@ -2,33 +2,41 @@ import cv2
 import numpy as np
 
 
-img_png_filename = 'watch.png'
-img_bmp_filename = 'Ape_Face.bmp'
+class BPCS(object):
 
-# split image into block of 8 pixel x 8 pixel
-def group_image(img):
-	result = []
-	windowsize_r = 8
-	windowsize_c = 8
-	for r in range(0,img.shape[0] - windowsize_r, windowsize_r):
-		for c in range(0,img.shape[1] - windowsize_c, windowsize_c):
-			result.append(img[r:r+windowsize_r,c:c+windowsize_c])
-	return result
+	def __init__(self, img):
+		self.img = cv2.imread(img, cv2.IMREAD_UNCHANGED)
+		self.row, self.col = img.shape[0], img.shape[1]
 
-# get all 8 bitplanes for an image
-# 10010100 -> bitplane 8 is 1, bitplane 0 is 0
-def to_bitplane(img, bit):
-	result = []
-	for i in range(8):
-		result.append((img / (2 ** i)) % 2)
-	return result
+	def hide(self, message, threshold):
+		windowsize_r = 8
+		windowsize_c = 8
+		for r in range(0,self.row - windowsize_r, windowsize_r):
+			for c in range(0,self.col - windowsize_c, windowsize_c):
+				temp_block = (img[r:r+windowsize_r,c:c+windowsize_c])
+				b,g,r,a = cv2.split(temp_block)
 
-if __name__ == '__main__':
-	img_bmp = cv2.imread(img_bmp_filename, -1)
-	img_bmp_grouped = group_image(img_bmp)
+				b_bitplane = self.to_bitplane(b)
+				g_bitplane = self.to_bitplane(g)
+				r_bitplane = self.to_bitplane(r)
+				a_bitplane = self.to_bitplane(a)
 
-	print(img_bmp_grouped[0])
+				# TODO : MASUKIN MESSAGE KE BITPLANE NYA
 
-	#cv2.imshow('image_bmp', img_bmp)
-	#cv2.waitKey(0)
-	#cv2.destroyAllWindows()
+	def to_bitplane(self, img):
+		result = []
+		for i in reversed(range(8)):
+			result.append((img / (2 ** i)) % 2)
+		return result
+
+	def calculate_complexity(self, img):
+		counter = 0
+		for r in range(img.shape[0]):
+			for c in range(img.shape[1]):
+				if(r != img.shape[0]-1):
+					if(img[r][c] != img[r+1][c]):
+						counter += 1
+				if(c != img.shape[1]-1):
+					if(img[r][c] != img[r][c+1]):
+						counter += 1
+		return counter / 112
