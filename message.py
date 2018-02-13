@@ -12,3 +12,12 @@ class Message(object):
 		self.content = temp
 		while(len(self.content) % 8 != 0):
 			self.content.append('00000000')
+
+	def conjugate(self, plane):
+		new = []
+		if plane.length == 64:
+			i = 0
+			for pixel in plane:
+				new[i] = pixel ^ chessboard[i]
+				i += 1
+		return new
