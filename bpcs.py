@@ -14,8 +14,8 @@ class BPCS(object):
 			conjugated = []
 			windowsize_r = 8
 			windowsize_c = 8
-			for r in range(0,self.row - windowsize_r, windowsize_r):
-				for c in range(0,self.col - windowsize_c, windowsize_c):
+			for r in range(0,self.row - windowsize_r + 1, windowsize_r):
+				for c in range(0,self.col - windowsize_c + 1, windowsize_c):
 					temp_block = (self.img[r:r+windowsize_r,c:c+windowsize_c])
 					b,g,r,a = cv2.split(temp_block)
 
