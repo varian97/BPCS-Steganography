@@ -1,4 +1,6 @@
+#!/usr/bin/python3
 import numpy as np
+import os
 
 chessboard = np.array([[0, 1, 0, 1, 0, 1, 0, 1],
 						[1, 0, 1, 0, 1, 0, 1, 0],
@@ -14,11 +16,14 @@ class Message(object):
 	content = None
 	length = 0
 	plane_array = []
+	file_name = None
+	file_extension = None
 
 	def __init__(self, pathname):
 		with open(pathname, 'rb') as f:
 			self.content = f.read()
 		self.length = len(self.content)
+		self.file_name, self.file_extension = os.path.splitext(pathname)
 
 	# ngubah file pesan dari byte ke bit
 	def to_binary(self):
@@ -44,9 +49,10 @@ class Message(object):
 		return plane ^ chessboard
 
 if __name__ == "__main__":
-	m = Message('../play.txt')
+	m = Message('README.md')
 	print("Load Pertama kali : \n", m.content)
 
+	print(m.file_name, m.file_extension)
 	m.to_binary()
 	m.to_plane_array()
 	print("Diubah ke binary plane : {} \n\n {}".format(m.plane_array[0], m.plane_array[1]))
