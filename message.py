@@ -18,6 +18,7 @@ class Message(object):
 	plane_array = []
 	file_name = None
 	file_extension = None
+	conjugate_map = []
 
 	def __init__(self, pathname):
 		with open(pathname, 'rb') as f:
@@ -48,6 +49,27 @@ class Message(object):
 	def conjugate(self, plane):
 		return plane ^ chessboard
 
+	def calculate_complexity(self, i):
+		counter = 0
+		for r in range(8):
+			for c in range(8):
+				if(r != 7):
+					if(self.plane_array[i][r][c] != self.plane_array[i][r+1][c]):
+						counter += 1
+				if(c != 7):
+					if(self.plane_array[i][r][c] != self.plane_array[i][r][c+1]):
+						counter += 1
+		return counter / 112
+
+	def prepareMessageBlock(self, threshold):
+		for i in range(len(self.plane_array)):
+			complexity = self.calculate_complexity(i)
+			print(complexity)
+			if complexity < threshold:
+				print("blok {} terkonjugasi".format(i))
+				self.conjugate(self.plane_array[i])
+				self.conjugate_map.append(i)
+
 if __name__ == "__main__":
 	m = Message('README.md')
 	print("Load Pertama kali : \n", m.content)
@@ -57,6 +79,10 @@ if __name__ == "__main__":
 	m.to_plane_array()
 	print("Diubah ke binary plane : {} \n\n {}".format(m.plane_array[0], m.plane_array[1]))
 
+	threshold = 0.3
+
+	print(m.calculate_complexity(0))
+	m.prepareMessageBlock(threshold)
+	print(m.conjugate_map)
 	# tes konyugasi
-	conjugate_res = m.conjugate(m.plane_array[0])
-	print("tes konyugasi = ", conjugate_res)
+	print("Binary plane : {} \n\n {}".format(m.plane_array[0], m.plane_array[1]))
