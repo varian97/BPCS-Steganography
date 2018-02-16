@@ -96,14 +96,14 @@ class BPCS(object):
 if __name__ == '__main__':
 	bpcs = BPCS('watch.png')
 
-	message = np.array([[0, 0, 1, 0, 0, 0, 1, 1],
+	message = [np.array([[0, 0, 1, 0, 0, 0, 1, 1],
 					 [0, 0, 1, 0, 0, 0, 0, 0],
 					 [0, 1, 0, 0, 0, 0, 1, 0],
 					 [0, 1, 0, 1, 0, 0, 0, 0],
 					 [0, 1, 0, 0, 0, 0, 1, 1],
 					 [0, 1, 0, 1, 0, 0, 1, 1],
 					 [0, 0, 1, 0, 1, 1, 0, 1],
-					 [0, 1, 0, 1, 0, 0, 1, 1]])
+					 [0, 1, 0, 1, 0, 0, 1, 1]])]
 
 	img_result = bpcs.hide(message)
 	cv2.imwrite('hasil1.png', img_result)
