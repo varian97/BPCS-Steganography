@@ -81,7 +81,7 @@ class Message(object):
 		for r in range(0,temp2.shape[0] - windowsize_r + 1, windowsize_r):
 		 	for c in range(0,temp2.shape[1] - windowsize_c + 1, windowsize_c):
 		 		self.plane_additional_data.append(temp2[r:r+windowsize_r,c:c+windowsize_c].astype(int))
-		#print(self.plane_additional_data)
+		#print(len(self.plane_additional_data))
 
 	def prepareMessageBlock(self, threshold):
 		for i in range(len(self.plane_array)):
@@ -90,6 +90,31 @@ class Message(object):
 				print("blok {} terkonjugasi".format(i))
 				self.conjugate(self.plane_array[i])
 				self.conjugate_map.append(i)
+
+	def convert_int_to_matrix_plane(self, number):
+		temp2 = []
+		k = 0
+		tel = []
+		for i in format(number, '064b'):
+			tel.append(i)
+			k = (k + 1) % 8
+			if k == 0:
+				temp2.append(tel)
+				tel = []
+		return temp2
+
+	def combined_message_header(self):
+		temp = []
+		num_header = len(self.plane_additional_data)
+		temp2 = self.convert_int_to_matrix_plane(num_header)
+		num_plane = len(self.plane_array)
+		temp3 = self.convert_int_to_matrix_plane(num_plane)
+		temp.append(temp2)
+		temp.append(self.plane_additional_data)
+		temp.append(temp3)
+		temp.append(self.plane_array)
+		return temp
+
 
 if __name__ == "__main__":
 	m = Message('textpanjang.txt')
@@ -107,6 +132,9 @@ if __name__ == "__main__":
 	#print(m.calculate_complexity(0))
 	m.prepareMessageBlock(threshold)
 	m.prepareAdditionalMessage()
+	print(m.combined_message_header())
+	# Spesification, plane 1 [m] : jumlah plane additional (header), plane 2-m: additional data
+	# plane m+1 [n]: jumlah plane message, plane m+2 - n: plane message
 	#print(m.conjugate_map)
 	# tes konyugasi
 	#print("Binary plane : {} \n\n {}".format(m.plane_array[0], m.plane_array[1]))
