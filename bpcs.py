@@ -20,17 +20,39 @@ class BPCS(object):
 	    col = (sequence_number) % 8
 	    return (row, col)
 
+	def put_msg_randomly(self, img_bitplane, msg_bitplane, rand_seq):
+		# print ("msg",msg_bitplane)
+		i = 0
+		for row in msg_bitplane:
+			for cell in row:
+				(x, y) = self.get_row_col(rand_seq[i])
+				img_bitplane[x,y] = cell
+
+				i += 1
+		return img_bitplane
+
+	def get_msg_randomly(self, img_bitplane, rand_seq):
+		msg_bitplane = [[0 for i in range(8)] for i in range(8)]
+		i = 0
+		for row in range(len(msg_bitplane)):
+			for col in range(len(msg_bitplane[row])):
+				(x, y) = self.get_row_col(rand_seq[i])
+				msg_bitplane[row][col] = img_bitplane[x,y]
+
+				i += 1
+		return np.array(msg_bitplane)
+
 	def hide(self, message, threshold = 0.3, randomize = False, key = None):
 		windowsize_r = 8
 		windowsize_c = 8
 
 		if (randomize):
-			random.seed(self.generate_seed)
-			rand_sequence = random.sample(range(64), 64)
+			random.seed(self.generate_seed(key))
+
 		print("lenmsg", len(message))
 
-		message_iterator = 0
-		while(message_iterator < len(message)):
+		msg_iterator = 0
+		while(msg_iterator < len(message)):
 			for row in range(0,self.row - windowsize_r + 1, windowsize_r):
 				for col in range(0,self.col - windowsize_c + 1, windowsize_c):
 					temp_block = self.img[row:row+windowsize_r, col:col+windowsize_c]
@@ -39,12 +61,16 @@ class BPCS(object):
 					channels_bitplane = [self.to_bitplane(block) for block in channels_block]
 					for i in range(len(channels_bitplane)):
 						itr_bitplane = 0
-						while(itr_bitplane < len(channels_bitplane[i]) and message_iterator < len(message)):
+						while(itr_bitplane < len(channels_bitplane[i]) and msg_iterator < len(message)):
 							if(self.calculate_complexity(channels_bitplane[i][itr_bitplane]) >= threshold):
-								print(self.calculate_complexity(channels_bitplane[i][itr_bitplane]))
-								channels_bitplane[i][itr_bitplane] = message[message_iterator]
-								message_iterator += 1
-								print("put in", row, col, i, itr_bitplane, message_iterator)
+								if (randomize):
+									rand_sequence = random.sample(range(64),64)
+									print(rand_sequence)
+									channels_bitplane[i][itr_bitplane] = self.put_msg_randomly(channels_bitplane[i][itr_bitplane], message[msg_iterator], rand_sequence)
+								else:
+									channels_bitplane[i][itr_bitplane] = message[msg_iterator]
+								msg_iterator += 1
+
 							itr_bitplane += 1
 
 					new_channels = [self.bitplane_to_channel(bitplane) for bitplane in channels_bitplane]
@@ -56,9 +82,9 @@ class BPCS(object):
 					self.img[row:row+windowsize_r, col:col+windowsize_c] = temp_block
 
 				#kotor tapi bodo amat
-				if(message_iterator >= len(message)): break
+				if(msg_iterator >= len(message)): break
 
-			if(message_iterator >= len(message)): break
+			if(msg_iterator >= len(message)): break
 		return self.img
 
 	def show(self, threshold = 0.3, randomize = False, key = None):
@@ -68,10 +94,9 @@ class BPCS(object):
 		msg_bitplane = []
 
 		if (randomize):
-			random.seed(self.generate_seed)
-			rand_sequence = random.sample(range(64), 64)
+			random.seed(self.generate_seed(key))
 
-		message_iterator = 0
+		msg_iterator = 0
 		for row in range(0,self.row - windowsize_r + 1, windowsize_r):
 			for col in range(0,self.col - windowsize_c + 1, windowsize_c):
 				temp_block = self.img[row:row+windowsize_r, col:col+windowsize_c]
@@ -84,11 +109,14 @@ class BPCS(object):
 					j = 0
 					for bitplane in channel_bitplane:
 						if(self.calculate_complexity(bitplane) >= threshold):
-							if message_iterator < 1:
-								print(self.calculate_complexity(bitplane))
-								print("get_from", row, col, i, j)
-							msg_bitplane.append(bitplane)
-							message_iterator += 1
+							if (randomize):
+								rand_sequence = random.sample(range(64),64)
+								if msg_iterator < 2:
+									print(rand_sequence)
+								msg_bitplane.append(self.get_msg_randomly(bitplane, rand_sequence))
+							else:
+								msg_bitplane.append(bitplane)
+							msg_iterator += 1
 						j += 1
 					i += 1
 
@@ -141,11 +169,11 @@ if __name__ == '__main__':
 						 [0, 1, 0, 1, 0, 0, 1, 1]]),
 			  ]
 
-	img_result = bpcs.hide(message)
+	img_result = bpcs.hide(message, randomize=True, key="secret")
 	cv2.imwrite('testcase/result_img/hasil2.png', img_result)
 
 	bpcs2 = BPCS('testcase/result_img/hasil2.png')
-	print(bpcs.show()[0:2])
+	print(bpcs.show(randomize=True, key="secret")[0:2])
 
 	# bpcs = BPCS('watch.png')
 	# m = Message('README.md')
