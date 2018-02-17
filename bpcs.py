@@ -1,5 +1,6 @@
 import cv2
 import numpy as np
+from message import Message
 
 class BPCS(object):
 
@@ -9,7 +10,6 @@ class BPCS(object):
 
 	def hide(self, message, threshold = 0.3):
 		if (self.channels == 4): # GAMBAR 4 CHANNEL ada Alpha (untuk PNG)
-			conjugated = []
 			windowsize_r = 8
 			windowsize_c = 8
 
@@ -95,15 +95,10 @@ class BPCS(object):
 
 if __name__ == '__main__':
 	bpcs = BPCS('watch.png')
-
-	message = [np.array([[0, 0, 1, 0, 0, 0, 1, 1],
-					 [0, 0, 1, 0, 0, 0, 0, 0],
-					 [0, 1, 0, 0, 0, 0, 1, 0],
-					 [0, 1, 0, 1, 0, 0, 0, 0],
-					 [0, 1, 0, 0, 0, 0, 1, 1],
-					 [0, 1, 0, 1, 0, 0, 1, 1],
-					 [0, 0, 1, 0, 1, 1, 0, 1],
-					 [0, 1, 0, 1, 0, 0, 1, 1]])]
-
-	img_result = bpcs.hide(message)
+	m = Message('README.md')
+	m.to_binary()
+	m.to_plane_array()
+	threshold = 0.3
+	m.prepareMessageBlock(threshold)
+	img_result = bpcs.hide(m.plane_array)
 	cv2.imwrite('hasil1.png', img_result)

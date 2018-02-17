@@ -16,6 +16,8 @@ class Message(object):
 	content = None
 	length = 0
 	plane_array = []
+	plane_additional_data = []
+	additional_binary = None
 	file_name = None
 	file_extension = None
 	conjugate_map = []
@@ -61,28 +63,50 @@ class Message(object):
 						counter += 1
 		return counter / 112
 
+	def prepareAdditionalMessage(self):
+		additional_string = ""
+		temp = []
+		additional_string += str(len(self.conjugate_map)) + ";"
+		additional_string += str(self.conjugate_map).strip('[]') + ";"
+		additional_string += self.file_name + self.file_extension + ";"
+		print(additional_string)
+		for c in additional_string:
+			temp.append(list(format(ord(c), '08b')))
+		while(len(temp) % 8 != 0):
+		 	temp.append('00000000')
+		self.additional_binary = temp
+		temp2 = np.array([list(i) for i in self.additional_binary])
+		windowsize_r = 8
+		windowsize_c = 8
+		for r in range(0,temp2.shape[0] - windowsize_r + 1, windowsize_r):
+		 	for c in range(0,temp2.shape[1] - windowsize_c + 1, windowsize_c):
+		 		self.plane_additional_data.append(temp2[r:r+windowsize_r,c:c+windowsize_c].astype(int))
+		#print(self.plane_additional_data)
+
 	def prepareMessageBlock(self, threshold):
 		for i in range(len(self.plane_array)):
 			complexity = self.calculate_complexity(i)
-			print(complexity)
 			if complexity < threshold:
 				print("blok {} terkonjugasi".format(i))
 				self.conjugate(self.plane_array[i])
 				self.conjugate_map.append(i)
 
 if __name__ == "__main__":
-	m = Message('README.md')
-	print("Load Pertama kali : \n", m.content)
+	m = Message('textpanjang.txt')
+	#print("Load Pertama kali : \n", m.content)
 
-	print(m.file_name, m.file_extension)
+	#print(m.file_name, m.file_extension)
 	m.to_binary()
+	#print(m.content)
 	m.to_plane_array()
-	print("Diubah ke binary plane : {} \n\n {}".format(m.plane_array[0], m.plane_array[1]))
+	#print(m.length)
+	#print("Diubah ke binary plane : {} \n\n {}".format(m.plane_array[0], m.plane_array[1]))
 
 	threshold = 0.3
 
-	print(m.calculate_complexity(0))
+	#print(m.calculate_complexity(0))
 	m.prepareMessageBlock(threshold)
-	print(m.conjugate_map)
+	m.prepareAdditionalMessage()
+	#print(m.conjugate_map)
 	# tes konyugasi
-	print("Binary plane : {} \n\n {}".format(m.plane_array[0], m.plane_array[1]))
+	#print("Binary plane : {} \n\n {}".format(m.plane_array[0], m.plane_array[1]))
