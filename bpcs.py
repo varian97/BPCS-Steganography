@@ -2,13 +2,18 @@
 import cv2
 import numpy as np
 import random
+import math
 from message import Message
+
+def psnr(img1, img2):
+	rms = math.sqrt(np.sum((img1.astype('float') - img2.astype('float')) ** 2) / (img1.shape[1] * img1.shape[0]))
+	return 20 * math.log10(256 / rms)
 
 class BPCS(object):
 
 	def __init__(self, img_path):
 		self.img = cv2.imread(img_path, cv2.IMREAD_UNCHANGED)
-		self.row, self.col, self.channels = self.img.shape
+		self.row, self.col = self.img.shape[0], self.img.shape[1]
 
 	def generate_seed(self, key):
 		"""Generate random seed based on key
@@ -148,7 +153,7 @@ class BPCS(object):
 		return counter / 112
 
 if __name__ == '__main__':
-	bpcs = BPCS('testcase/original_img/Ape_Face.bmp')
+	bpcs = BPCS('testcase/original_img/Ape_Face_grayscale.png')
 
 	message = [
 				np.array([[0, 0, 1, 0, 0, 0, 1, 1],
@@ -174,6 +179,9 @@ if __name__ == '__main__':
 
 	bpcs2 = BPCS('testcase/result_img/hasil2.png')
 	print(bpcs.show(randomize=True, key="secret")[0:2])
+
+	# test psnr
+	#print(psnr(cv2.imread('./testcase/original_img/Ape_Face_grayscale.png',-1), bpcs2.img))
 
 	# bpcs = BPCS('watch.png')
 	# m = Message('README.md')
