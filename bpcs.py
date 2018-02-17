@@ -2,6 +2,7 @@
 import cv2
 import numpy as np
 import random
+from message import Message
 
 class BPCS(object):
 
@@ -118,20 +119,8 @@ class BPCS(object):
 						counter += 1
 		return counter / 112
 
-def calculate_complexity(img):
-	counter = 0
-	for r in range(8):
-		for c in range(8):
-			if(r < 7):
-				if(img[r][c] != img[r+1][c]):
-					counter += 1
-			if(c < 7):
-				if(img[r][c] != img[r][c+1]):
-					counter += 1
-	return counter / 112
-
 if __name__ == '__main__':
-	bpcs = BPCS('Ape_Face.bmp')
+	bpcs = BPCS('testcase/original_img/Ape_Face.bmp')
 
 	message = [
 				np.array([[0, 0, 1, 0, 0, 0, 1, 1],
@@ -153,8 +142,16 @@ if __name__ == '__main__':
 			  ]
 
 	img_result = bpcs.hide(message)
-	cv2.imwrite('hasil2.png', img_result)
+	cv2.imwrite('testcase/result_img/hasil2.png', img_result)
 
-	print("complexity", calculate_complexity(message[0]))
-	bpcs2 = BPCS('hasil2.png')
+	bpcs2 = BPCS('testcase/result_img/hasil2.png')
 	print(bpcs.show()[0:2])
+
+	# bpcs = BPCS('watch.png')
+	# m = Message('README.md')
+	# m.to_binary()
+	# m.to_plane_array()
+	# threshold = 0.3
+	# m.prepareMessageBlock(threshold)
+	# img_result = bpcs.hide(m.plane_array)
+	# cv2.imwrite('hasil1.png', img_result)
