@@ -1,5 +1,7 @@
+#!/usr/bin/python3
 import cv2
 import numpy as np
+import random
 
 class BPCS(object):
 
@@ -7,67 +9,90 @@ class BPCS(object):
 		self.img = cv2.imread(img_path, cv2.IMREAD_UNCHANGED)
 		self.row, self.col, self.channels = self.img.shape
 
-	def hide(self, message, threshold = 0.3):
-		if (self.channels == 4): # GAMBAR 4 CHANNEL ada Alpha (untuk PNG)
-			conjugated = []
-			windowsize_r = 8
-			windowsize_c = 8
+	def generate_seed(self, key):
+		"""Generate random seed based on key
+		"""
+		return sum([ord(a) for a in key])
 
-			message_iterator = 0
-			while(message_iterator < len(message)):
-				for row in range(0,self.row - windowsize_r + 1, windowsize_r):
-					for col in range(0,self.col - windowsize_c + 1, windowsize_c):
-						temp_block = self.img[row:row+windowsize_r, col:col+windowsize_c]
+	def get_row_col(self, sequence_number):
+	    row = (sequence_number) // 8
+	    col = (sequence_number) % 8
+	    return (row, col)
 
-						b,g,r,a = cv2.split(temp_block)
+	def hide(self, message, threshold = 0.3, randomize = False, key = None):
+		windowsize_r = 8
+		windowsize_c = 8
 
-						b_bitplane = self.to_bitplane(b)
-						g_bitplane = self.to_bitplane(g)
-						r_bitplane = self.to_bitplane(r)
-						a_bitplane = self.to_bitplane(a)
+		if (randomize):
+			random.seed(self.generate_seed)
+			rand_sequence = random.sample(range(64), 64)
+		print("lenmsg", len(message))
 
-						# masukin message
-						it_b, it_g, it_r = 0, 0, 0
-						while(it_b < len(b_bitplane) and message_iterator < len(message)):
-							if(self.calculate_complexity(b_bitplane[it_b]) >= threshold):
-								b_bitplane[it_b] = message[message_iterator]
+		message_iterator = 0
+		while(message_iterator < len(message)):
+			for row in range(0,self.row - windowsize_r + 1, windowsize_r):
+				for col in range(0,self.col - windowsize_c + 1, windowsize_c):
+					temp_block = self.img[row:row+windowsize_r, col:col+windowsize_c]
+					channels_block = cv2.split(temp_block)
+
+					channels_bitplane = [self.to_bitplane(block) for block in channels_block]
+					for i in range(len(channels_bitplane)):
+						itr_bitplane = 0
+						while(itr_bitplane < len(channels_bitplane[i]) and message_iterator < len(message)):
+							if(self.calculate_complexity(channels_bitplane[i][itr_bitplane]) >= threshold):
+								print(self.calculate_complexity(channels_bitplane[i][itr_bitplane]))
+								channels_bitplane[i][itr_bitplane] = message[message_iterator]
 								message_iterator += 1
-							it_b += 1
+								print("put in", row, col, i, itr_bitplane, message_iterator)
+							itr_bitplane += 1
 
-						while(it_g < len(g_bitplane) and message_iterator < len(message)):
-							if(self.calculate_complexity(g_bitplane[it_g]) >= threshold):
-								g_bitplane[it_g] = message[message_iterator]
-								message_iterator += 1
-							it_g += 1
+					new_channels = [self.bitplane_to_channel(bitplane) for bitplane in channels_bitplane]
 
-						while(it_r < len(r_bitplane) and message_iterator < len(message)):
-							if(self.calculate_complexity(r_bitplane[it_r]) >= threshold):
-								r_bitplane[it_r] = message[message_iterator]
-								message_iterator += 1
-							it_r += 1
+					# gabungin ke gambar utuh
+					temp_block = cv2.merge(new_channels)
 
-						# gabungin lagi bitplane ke channel2 semula
-						blue = self.bitplane_to_channel(b_bitplane)
-						green = self.bitplane_to_channel(g_bitplane)
-						red = self.bitplane_to_channel(r_bitplane)
-						alpha = self.bitplane_to_channel(a_bitplane)
+					# rewrite gambar asli dengan informasi rahasia
+					self.img[row:row+windowsize_r, col:col+windowsize_c] = temp_block
 
-						# gabungin ke gambar utuh
-						temp_block = cv2.merge((blue, green, red, alpha))
-
-						# rewrite gambar asli dengan informasi rahasia
-						self.img[row:row+windowsize_r, col:col+windowsize_c] = temp_block
-
-					#kotor tapi bodo amat
-					if(message_iterator >= len(message)): break
-
+				#kotor tapi bodo amat
 				if(message_iterator >= len(message)): break
-			return self.img
 
-		elif (self.channels == 3): # GAMBAR 3 CHANNEL, gak ada alpha (untuk BMP)
-			pass
-		else:
-			print('Not Supported Image')
+			if(message_iterator >= len(message)): break
+		return self.img
+
+	def show(self, threshold = 0.3, randomize = False, key = None):
+		windowsize_r = 8
+		windowsize_c = 8
+
+		msg_bitplane = []
+
+		if (randomize):
+			random.seed(self.generate_seed)
+			rand_sequence = random.sample(range(64), 64)
+
+		message_iterator = 0
+		for row in range(0,self.row - windowsize_r + 1, windowsize_r):
+			for col in range(0,self.col - windowsize_c + 1, windowsize_c):
+				temp_block = self.img[row:row+windowsize_r, col:col+windowsize_c]
+				channels_block = cv2.split(temp_block)
+
+				channels_bitplane = [self.to_bitplane(block) for block in channels_block]
+
+				i = 0
+				for channel_bitplane in channels_bitplane:
+					j = 0
+					for bitplane in channel_bitplane:
+						if(self.calculate_complexity(bitplane) >= threshold):
+							if message_iterator < 1:
+								print(self.calculate_complexity(bitplane))
+								print("get_from", row, col, i, j)
+							msg_bitplane.append(bitplane)
+							message_iterator += 1
+						j += 1
+					i += 1
+
+
+		return msg_bitplane
 
 	def to_bitplane(self, img):
 		result = []
@@ -76,7 +101,7 @@ class BPCS(object):
 		return result
 
 	def bitplane_to_channel(self, bitplane):
-		result = (2 * (2 * (2 * (2 * (2 * (2 * (2 * bitplane[0] + bitplane[1]) 
+		result = (2 * (2 * (2 * (2 * (2 * (2 * (2 * bitplane[0] + bitplane[1])
 					+ bitplane[2]) + bitplane[3]) + bitplane[4])
 					+ bitplane[5]) + bitplane[6]) + bitplane[7])
 		return result
@@ -93,17 +118,43 @@ class BPCS(object):
 						counter += 1
 		return counter / 112
 
-if __name__ == '__main__':
-	bpcs = BPCS('watch.png')
+def calculate_complexity(img):
+	counter = 0
+	for r in range(8):
+		for c in range(8):
+			if(r < 7):
+				if(img[r][c] != img[r+1][c]):
+					counter += 1
+			if(c < 7):
+				if(img[r][c] != img[r][c+1]):
+					counter += 1
+	return counter / 112
 
-	message = [np.array([[0, 0, 1, 0, 0, 0, 1, 1],
-					 [0, 0, 1, 0, 0, 0, 0, 0],
-					 [0, 1, 0, 0, 0, 0, 1, 0],
-					 [0, 1, 0, 1, 0, 0, 0, 0],
-					 [0, 1, 0, 0, 0, 0, 1, 1],
-					 [0, 1, 0, 1, 0, 0, 1, 1],
-					 [0, 0, 1, 0, 1, 1, 0, 1],
-					 [0, 1, 0, 1, 0, 0, 1, 1]])]
+if __name__ == '__main__':
+	bpcs = BPCS('Ape_Face.bmp')
+
+	message = [
+				np.array([[0, 0, 1, 0, 0, 0, 1, 1],
+						 [0, 0, 1, 0, 0, 0, 0, 0],
+						 [0, 1, 0, 0, 0, 0, 1, 0],
+						 [0, 1, 0, 1, 0, 0, 0, 0],
+						 [0, 1, 0, 0, 0, 0, 1, 1],
+						 [0, 1, 0, 1, 0, 0, 1, 1],
+						 [0, 0, 1, 0, 1, 1, 0, 1],
+						 [0, 1, 0, 1, 0, 0, 1, 1]]),
+				np.array([[0, 0, 1, 0, 0, 0, 1, 1],
+						 [0, 0, 1, 0, 1, 0, 0, 0],
+						 [0, 1, 0, 0, 0, 0, 1, 0],
+						 [0, 1, 0, 1, 0, 0, 0, 0],
+						 [0, 1, 0, 0, 1, 0, 1, 1],
+						 [0, 1, 0, 1, 0, 0, 1, 1],
+						 [0, 0, 1, 0, 1, 1, 0, 1],
+						 [0, 1, 0, 1, 0, 0, 1, 1]]),
+			  ]
 
 	img_result = bpcs.hide(message)
-	cv2.imwrite('hasil1.png', img_result)
+	cv2.imwrite('hasil2.png', img_result)
+
+	print("complexity", calculate_complexity(message[0]))
+	bpcs2 = BPCS('hasil2.png')
+	print(bpcs.show()[0:2])
