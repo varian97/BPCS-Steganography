@@ -90,7 +90,7 @@ class Message(object):
 	def conjugate_message_content(self):
 		for i in range(len(self.content_bitplane)):
 			complexity = self.calculate_complexity(i)
-			print(complexity)
+			# print(complexity)
 			if complexity < self.threshold:
 				print("blok {} terkonjugasi".format(i))
 				self.content_bitplane[i] = self.conjugate(self.content_bitplane[i])
@@ -111,11 +111,16 @@ class Message(object):
 		msg_header_string += self.file_name + ";"
 		msg_header_string += self.file_extension + ";"
 		msg_header_string += str(self.content_length) + ";"
-		print(msg_header_string)
-		self.header = msg_header_string
+		# print(msg_header_string)
+
+		self.header = msg_header_string.encode('utf-8')
 		self.header_length = len(msg_header_string)
 
-		header_binary = self.to_binary(self.header.encode('utf-8'))
+		if (self.encrypted and self.key != None):
+			self.header = vigenere_cipher.encrypt(self.header, self.key)
+
+
+		header_binary = self.to_binary(self.header)
 		self.header_bitplane = self.to_bitplane(header_binary)
 		return self.header_bitplane
 
@@ -181,7 +186,13 @@ class Message(object):
 		return byte_array
 
 	def get_header_from_bitplanes(self):
-		self.header = self.get_byte_from_bitplane_array(self.header_bitplane).decode('utf-8')
+		self.header = self.get_byte_from_bitplane_array(self.header_bitplane)
+
+		if (self.encrypted and self.key != None):
+			self.header = vigenere_cipher.decrypt(self.header, self.key)
+
+		self.header = self.header.decode('utf-8', errors="ignore")
+
 		header_chunk = self.header.split(';')
 		# print(header_chunk)
 		self.conjugate_map = []
