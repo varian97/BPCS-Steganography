@@ -75,6 +75,8 @@ class BPCS(object):
 								else:
 									channels_bitplane[i][itr_bitplane] = message[msg_iterator]
 								msg_iterator += 1
+								# if (msg_iterator < 5):
+									# print("put at", row, col, i, itr_bitplane)
 
 							itr_bitplane += 1
 
@@ -116,12 +118,12 @@ class BPCS(object):
 						if(self.calculate_complexity(bitplane) >= threshold):
 							if (randomize):
 								rand_sequence = random.sample(range(64),64)
-								if msg_iterator < 2:
-									print(rand_sequence)
 								msg_bitplane.append(self.get_msg_randomly(bitplane, rand_sequence))
 							else:
 								msg_bitplane.append(bitplane)
 							msg_iterator += 1
+							if (msg_iterator < 5):
+								print("get at", row, col, i, j)
 						j += 1
 					i += 1
 
@@ -173,12 +175,17 @@ if __name__ == '__main__':
 						 [0, 0, 1, 0, 1, 1, 0, 1],
 						 [0, 1, 0, 1, 0, 0, 1, 1]]),
 			  ]
+	msg = Message("textpanjang.txt", threshold = 0.3)
+	message = msg.create_message()
+	print(message[:2])
 
-	img_result = bpcs.hide(message, randomize=True, key="secret")
+	# img_result = bpcs.hide(message, randomize=True, key="secret")
+	img_result = bpcs.hide(message)
 	cv2.imwrite('testcase/result_img/hasil2.png', img_result)
 
 	bpcs2 = BPCS('testcase/result_img/hasil2.png')
-	print(bpcs.show(randomize=True, key="secret")[0:2])
+	# print(bpcs2.show(randomize=True, key="secret")[0:2])
+	print(bpcs2.show()[0:2])
 
 	# test psnr
 	#print(psnr(cv2.imread('./testcase/original_img/Ape_Face_grayscale.png',-1), bpcs2.img))
