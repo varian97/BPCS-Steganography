@@ -54,7 +54,7 @@ class BPCS(object):
 		if (randomize):
 			random.seed(self.generate_seed(key))
 
-		print("lenmsg", len(message))
+		#print("lenmsg", len(message))
 
 		msg_iterator = 0
 		while(msg_iterator < len(message)):
@@ -70,7 +70,7 @@ class BPCS(object):
 							if(self.calculate_complexity(channels_bitplane[i][itr_bitplane]) >= threshold):
 								if (randomize):
 									rand_sequence = random.sample(range(64),64)
-									print(rand_sequence)
+									#print(rand_sequence)
 									channels_bitplane[i][itr_bitplane] = self.put_msg_randomly(channels_bitplane[i][itr_bitplane], message[msg_iterator], rand_sequence)
 								else:
 									channels_bitplane[i][itr_bitplane] = message[msg_iterator]
@@ -177,7 +177,7 @@ if __name__ == '__main__':
 			  ]
 	msg = Message("textpanjang.txt", threshold = 0.3)
 	message = msg.create_message()
-	print(message[:2])
+	#print(message[:2])
 
 	# img_result = bpcs.hide(message, randomize=True, key="secret")
 	img_result = bpcs.hide(message)
@@ -185,7 +185,7 @@ if __name__ == '__main__':
 
 	bpcs2 = BPCS('testcase/result_img/hasil2.png')
 	# print(bpcs2.show(randomize=True, key="secret")[0:2])
-	print(bpcs2.show()[0:2])
+	#print(bpcs2.show()[0:2])
 
 	# test psnr
 	#print(psnr(cv2.imread('./testcase/original_img/Ape_Face_grayscale.png',-1), bpcs2.img))

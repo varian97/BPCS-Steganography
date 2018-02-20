@@ -111,7 +111,7 @@ class Message(object):
 		msg_header_string += self.file_name + ";"
 		msg_header_string += self.file_extension + ";"
 		msg_header_string += str(self.content_length) + ";"
-		print(msg_header_string)
+		#print(msg_header_string)
 
 		self.header = msg_header_string.encode('utf-8')
 		self.header_length = len(msg_header_string)
@@ -212,14 +212,14 @@ class Message(object):
 
 		header_length = self.matrix_to_int(bitplane_array[0])
 		self.header_bitplane = bitplane_array[1:header_length + 1]
-		print(header_length, self.header_bitplane)
+		#print(header_length, self.header_bitplane)
 
 		# buang len header sama header dari bitplane array
 		bitplane_array = bitplane_array[header_length+1:]
 
 		content_length = self.matrix_to_int(bitplane_array[0])
 		self.content_bitplane = bitplane_array[1:content_length+1]
-		print (content_length, self.content_bitplane)
+		#print (content_length, self.content_bitplane)
 
 		self.get_header_from_bitplanes()
 		self.get_content_from_bitplanes()
@@ -243,7 +243,7 @@ class Message(object):
 		self.header = self.header.decode('utf-8', errors="ignore")
 
 		header_chunk = self.header.split(';')
-		print(header_chunk)
+		#print(header_chunk)
 		self.conjugate_list = []
 		# if header_chunk[0] != '':
 		# 	for conjugate_pos in header_chunk[0].split(','):

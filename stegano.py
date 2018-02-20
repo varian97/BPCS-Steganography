@@ -1,7 +1,7 @@
 #!/usr/bin/python3
 import argparse
 import cv2
-from bpcs import BPCS
+from bpcs import BPCS, psnr
 from message import Message
 
 def create_arguments():
@@ -37,15 +37,14 @@ def extract(args):
 # create stegano image
 def create(args):
 	bpcs = BPCS(args.original_img)
-
 	orig_extension = args.original_img.split('.')[-1]
 
 	# prepare message
 	encrypted = True if args.key != None else False
-	print (encrypted)
+	#print (encrypted)
 	msg = Message(pathname=args.secret_message, encrypted = encrypted, key = args.key, threshold = args.threshold)
 	bitplane_msg = msg.create_message()
-	print(bitplane_msg[:10])
+	#print(bitplane_msg[:10])
 
 	img_result = bpcs.hide(bitplane_msg, randomize=args.randomize, key=args.key, threshold = args.threshold)
 	if args.output == None:
@@ -53,13 +52,22 @@ def create(args):
 	args.output += "." + orig_extension
 
 	cv2.imwrite(args.output, img_result)
-	return
+	origin_image = cv2.imread(args.original_img, -1)
+	embed_image = cv2.imread(args.output,-1)
+	
+	psnr_value = psnr(origin_image, embed_image)
 
+	print("PSNR: {}".format(psnr_value))
+	# show embedded & original image
+	cv2.imshow('Original Image', origin_image)
+	cv2.imshow("Embedded Image (PSNR: {})".format(psnr_value),embed_image)
+	cv2.waitKey(0)
+	return
 
 if __name__ == '__main__':
 
 	args = create_arguments()
-	print(args.original_img)
+	print("Original Image: {}".format(args.original_img))
 	if args.extract:
 		extract(args)
 	else:
